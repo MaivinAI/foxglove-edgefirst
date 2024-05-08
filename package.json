@@ -1,11 +1,11 @@
 {
-  "name": "EdgefirstDetectConverter",
+  "name": "edgefirst_detect_converter",
   "displayName": "EdgefirstDetectConverter",
-  "description": "",
+  "description": "Converts EdgeFirst Detect schema into ImageAnnotation messages assuming 1080p camera resolution",
   "publisher": "Au-Zone Technologies",
   "homepage": "",
   "version": "0.0.0",
-  "license": "UNLICENSED",
+  "license": "CLOSED",
   "main": "./dist/extension.js",
   "keywords": [],
   "scripts": {
