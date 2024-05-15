@@ -5,7 +5,7 @@
   "publisher": "EdgeFirst",
   "homepage": "",
   "version": "1.0.0",
-  "license": "CLOSED",
+  "license": "AGPL-3.0",
   "main": "./dist/extension.js",
   "keywords": [],
   "scripts": {
