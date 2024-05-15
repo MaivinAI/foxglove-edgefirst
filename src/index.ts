@@ -114,9 +114,9 @@ export function activate(extensionContext: ExtensionContext): void {
         };
         const new_text: TextAnnotation = {
           timestamp: inputMessage.inputTimestamp,
-          position: { x: x - width / 2, y: y - height / 2 + 4 },
+          position: { x: x - width / 2, y: y - height / 2 + 6 },
           text: label,
-          font_size: 24,
+          font_size: 48,
           text_color: box_color,
           background_color: TRANSPARENT,
         };
