@@ -110,7 +110,7 @@ export function activate(extensionContext: ExtensionContext): void {
           outline_color: box_color,
           outline_colors: [box_color, box_color, box_color, box_color],
           fill_color: TRANSPARENT,
-          thickness: 3,
+          thickness: 9,
         };
         const new_text: TextAnnotation = {
           timestamp: inputMessage.inputTimestamp,
