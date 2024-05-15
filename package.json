@@ -1,6 +1,6 @@
 {
   "name": "detect",
-  "displayName": "Edgefirst Detect",
+  "displayName": "EdgeFirst Detect",
   "description": "Converts EdgeFirst Detect schema into ImageAnnotation messages assuming 1080p camera resolution",
   "publisher": "EdgeFirst",
   "homepage": "",
