@@ -1,10 +1,10 @@
 {
   "name": "detect",
   "displayName": "EdgeFirst Detect",
-  "description": "Converts EdgeFirst Detect schema into ImageAnnotation messages assuming 1080p camera resolution",
+  "description": "Converts EdgeFirst Detect and Mask schema into ImageAnnotation messages assuming 1080p camera resolution. ",
   "publisher": "EdgeFirst",
   "homepage": "",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "AGPL-3.0",
   "main": "./dist/extension.js",
   "keywords": [],
