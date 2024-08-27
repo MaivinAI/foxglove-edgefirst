@@ -1,10 +1,10 @@
 {
   "name": "detect",
   "displayName": "EdgeFirst Detect",
-  "description": "Converts EdgeFirst Detect schema into ImageAnnotation messages assuming 1080p camera resolution",
+  "description": "Converts EdgeFirst Detect and Mask schema into ImageAnnotation messages assuming 1080p camera resolution. ",
   "publisher": "EdgeFirst",
   "homepage": "",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "license": "AGPL-3.0",
   "main": "./dist/extension.js",
   "keywords": [],
@@ -34,12 +34,15 @@
     "eslint-plugin-prettier": "5.1.3",
     "eslint-plugin-react": "7.34.1",
     "eslint-plugin-react-hooks": "4.6.0",
+    "mirada": "^0.0.15",
     "prettier": "3.2.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "typescript": "5.4.3"
   },
   "dependencies": {
-    "@foxglove/schemas": "^1.6.2"
+    "@foxglove/schemas": "^1.6.2",
+    "@techstark/opencv-js": "^4.10.0-release.1",
+    "zstandard-wasm": "^1.5.0-rev.5"
   }
 }
