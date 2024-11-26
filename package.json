@@ -1,7 +1,7 @@
 {
   "name": "detect",
   "displayName": "EdgeFirst Detect",
-  "description": "Converts EdgeFirst Detect and Mask schema into ImageAnnotation messages assuming 1080p camera resolution. ",
+  "description": "Converts EdgeFirst Detect and Mask schema into ImageAnnotation messages assuming 1080p camera resolution. Also converts Mask and RadarCube schema into RawImage messages for visualization.",
   "publisher": "EdgeFirst",
   "homepage": "",
   "version": "1.0.2",
