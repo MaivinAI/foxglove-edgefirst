@@ -56,6 +56,16 @@ type Mask = {
   mask: Uint8Array;
 };
 
+type RadarCube = {
+  header: Header;
+  timestamp: number;
+  layout: Uint8Array;
+  shape: Uint16Array;
+  scales: Float32Array;
+  cube: Int16Array;
+  is_complex: boolean;
+};
+
 const WHITE: Color = { r: 1, g: 1, b: 1, a: 1 };
 const WHITE_I8: Color = { r: 255, g: 255, b: 255, a: 255 };
 const TRANSPARENT: Color = { r: 1, g: 1, b: 1, a: 0 };
@@ -347,8 +357,58 @@ function registerMaskConverter(extensionContext: ExtensionContext): void {
     },
   });
 }
+const REVERSE_HEIGHT = true;
+function registerRadarCubeConverter(extensionContext: ExtensionContext): void {
+  extensionContext.registerMessageConverter({
+    fromSchemaName: "edgefirst_msgs/msg/RadarCube",
+    toSchemaName: "foxglove_msgs/msg/RawImage",
+    converter: (inputMessage: RadarCube): RawImage => {
+      const height = inputMessage.shape[1] ?? 1;
+      const width = inputMessage.shape[3] ?? 1;
+      const stride = (inputMessage.shape[2] ?? 1) * width;
+      const data = new Uint8Array(width * height * 2);
 
+      const rawImage: RawImage = {
+        timestamp: inputMessage.header.timestamp,
+        frame_id: inputMessage.header.frame_id,
+        width,
+        height,
+        encoding: "mono16",
+        step: 2 * width,
+        data,
+      };
+      let max_val = 0;
+      let min_val = 65535;
+      for (let i = 0; i < width * height; i++) {
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        const curr_height = REVERSE_HEIGHT ? height - Math.floor(i / width) : Math.floor(i / width);
+        const cube_index = curr_height * stride + (i % width);
+        const val = Math.abs(inputMessage.cube[cube_index] ?? 0);
+        max_val = Math.max(val, max_val);
+        min_val = Math.min(val, min_val);
+        data[i * 2 + 0] = val >> 8;
+        data[i * 2 + 1] = val % 256;
+      }
+      // if (max_val <= min_val) {
+      //   max_val = min_val + 1;
+      // }
+      // for (let i = 0; i < width * height; i++) {
+      // const curr_height = REVERSE_HEIGHT ? height - Math.floor(i / width) : Math.floor(i / width);
+      // const cube_index = curr_height * stride + (i % width);
+      // const val = (Math.abs(inputMessage.cube[cube_index] ?? 0) - min_val) / (max_val - min_val);
+      // const color = interpolate(turbo_colormap_data, val);
+      // data[i * 4 + 0] = color.r;
+      // data[i * 4 + 1] = color.g;
+      // data[i * 4 + 2] = color.b;
+      // data[i * 4 + 3] = color.a;
+      // }
+
+      return rawImage;
+    },
+  });
+}
 export function activate(extensionContext: ExtensionContext): void {
   registerDetectConverter(extensionContext);
   registerMaskConverter(extensionContext);
+  registerRadarCubeConverter(extensionContext);
 }
