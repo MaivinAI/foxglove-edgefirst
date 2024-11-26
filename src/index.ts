@@ -377,31 +377,16 @@ function registerRadarCubeConverter(extensionContext: ExtensionContext): void {
         step: 2 * width,
         data,
       };
-      let max_val = 0;
-      let min_val = 65535;
+      const factor = 65535 / 2500;
       for (let i = 0; i < width * height; i++) {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         const curr_height = REVERSE_HEIGHT ? height - Math.floor(i / width) : Math.floor(i / width);
         const cube_index = curr_height * stride + (i % width);
-        const val = Math.abs(inputMessage.cube[cube_index] ?? 0);
-        max_val = Math.max(val, max_val);
-        min_val = Math.min(val, min_val);
+        let val = Math.log2(Math.abs(inputMessage.cube[cube_index] ?? 0) + 1) * factor;
+        val = Math.min(val, 65535);
         data[i * 2 + 0] = val >> 8;
         data[i * 2 + 1] = val % 256;
       }
-      // if (max_val <= min_val) {
-      //   max_val = min_val + 1;
-      // }
-      // for (let i = 0; i < width * height; i++) {
-      // const curr_height = REVERSE_HEIGHT ? height - Math.floor(i / width) : Math.floor(i / width);
-      // const cube_index = curr_height * stride + (i % width);
-      // const val = (Math.abs(inputMessage.cube[cube_index] ?? 0) - min_val) / (max_val - min_val);
-      // const color = interpolate(turbo_colormap_data, val);
-      // data[i * 4 + 0] = color.r;
-      // data[i * 4 + 1] = color.g;
-      // data[i * 4 + 2] = color.b;
-      // data[i * 4 + 3] = color.a;
-      // }
 
       return rawImage;
     },
