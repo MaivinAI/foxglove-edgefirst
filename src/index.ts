@@ -377,11 +377,14 @@ function registerRadarCubeConverter(extensionContext: ExtensionContext): void {
         step: 2 * width,
         data,
       };
+
+      const offset = (inputMessage.shape[0] ?? 1) > 1 ? height * stride : 0;
+
       const factor = 65535 / 2500;
       for (let i = 0; i < width * height; i++) {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         const curr_height = REVERSE_HEIGHT ? height - Math.floor(i / width) : Math.floor(i / width);
-        const cube_index = curr_height * stride + (i % width);
+        const cube_index = offset + curr_height * stride + (i % width);
         let val = Math.log2(Math.abs(inputMessage.cube[cube_index] ?? 0) + 1) * factor;
         val = Math.min(val, 65535);
         data[i * 2 + 0] = val >> 8;
