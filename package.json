@@ -4,7 +4,7 @@
   "description": "Converts EdgeFirst Detect and Mask schema into ImageAnnotation messages assuming 1080p camera resolution. Also converts Mask and RadarCube schema into RawImage messages for visualization.",
   "publisher": "EdgeFirst",
   "homepage": "",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "license": "AGPL-3.0",
   "main": "./dist/extension.js",
   "keywords": [],
