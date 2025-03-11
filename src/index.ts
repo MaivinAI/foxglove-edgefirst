@@ -144,6 +144,18 @@ function uuid_to_color(id: string): Color {
   };
 }
 
+let radarcube_sequence = "";
+let radarcube_rx = 0;
+
+function registerGlobalVariableGetter(extensionContext: ExtensionContext): void {
+  extensionContext.registerTopicAliases((args) => {
+    const { globalVariables } = args;
+    radarcube_sequence = globalVariables["radar_seq"]?.toString();
+    radarcube_rx = Number(globalVariables["radar_rx"]?.toString());
+    return [];
+  });
+}
+
 function registerDetectConverter(extensionContext: ExtensionContext): void {
   extensionContext.registerMessageConverter({
     fromSchemaName: "edgefirst_msgs/msg/Detect",
@@ -358,6 +370,7 @@ function registerMaskConverter(extensionContext: ExtensionContext): void {
   });
 }
 const REVERSE_HEIGHT = true;
+
 function registerRadarCubeConverter(extensionContext: ExtensionContext): void {
   extensionContext.registerMessageConverter({
     fromSchemaName: "edgefirst_msgs/msg/RadarCube",
@@ -377,9 +390,26 @@ function registerRadarCubeConverter(extensionContext: ExtensionContext): void {
         step: 2 * width,
         data,
       };
+      let offset = 0;
+      if (radarcube_sequence === "A") {
+        offset = 0;
+      } else if (radarcube_sequence === "B" || radarcube_sequence === "") {
+        offset = (inputMessage.shape[0] ?? 1) > 1 ? height * stride : 0;
+      } else {
+        return rawImage;
+      }
 
-      const offset = (inputMessage.shape[0] ?? 1) > 1 ? height * stride : 0;
+      if (radarcube_rx < 0) {
+        return rawImage;
+      }
+      if (radarcube_rx >= (inputMessage.shape[2] ?? 1)) {
+        return rawImage;
+      }
 
+      offset += width * radarcube_rx;
+
+      console.log(`radarcube_sequenceA: ${radarcube_sequenceA}`);
+      console.log(`radarcube_rx: ${radarcube_rx}`);
       const factor = 65535 / 2500;
       for (let i = 0; i < width * height; i++) {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -395,7 +425,9 @@ function registerRadarCubeConverter(extensionContext: ExtensionContext): void {
     },
   });
 }
+
 export function activate(extensionContext: ExtensionContext): void {
+  registerGlobalVariableGetter(extensionContext);
   registerDetectConverter(extensionContext);
   registerMaskConverter(extensionContext);
   registerRadarCubeConverter(extensionContext);
