@@ -150,7 +150,7 @@ let radarcube_rx = 0;
 function registerGlobalVariableGetter(extensionContext: ExtensionContext): void {
   extensionContext.registerTopicAliases((args) => {
     const { globalVariables } = args;
-    radarcube_sequence = globalVariables["radar_seq"]?.toString();
+    radarcube_sequence = String(globalVariables["radar_seq"]);
     radarcube_rx = Number(globalVariables["radar_rx"]?.toString());
     return [];
   });
@@ -408,8 +408,6 @@ function registerRadarCubeConverter(extensionContext: ExtensionContext): void {
 
       offset += width * radarcube_rx;
 
-      console.log(`radarcube_sequenceA: ${radarcube_sequenceA}`);
-      console.log(`radarcube_rx: ${radarcube_rx}`);
       const factor = 65535 / 2500;
       for (let i = 0; i < width * height; i++) {
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
