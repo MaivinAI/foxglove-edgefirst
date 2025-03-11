@@ -1,11 +1,9 @@
-name: Main
+name: Upload Release Asset
 
 on:
   push:
     tags:
       - "v*.*.*"
-
-name: Upload Release Asset
 
 jobs:
   build:
