@@ -154,6 +154,8 @@ function registerGlobalVariableGetter(extensionContext: ExtensionContext): void 
     const rx = Number(globalVariables["radar_rx"] ?? 0);
     if (isFinite(rx)) {
       radarcube_rx = rx;
+    } else {
+      radarcube_rx = -1;
     }
     return [];
   });
