@@ -150,8 +150,11 @@ let radarcube_rx = 0;
 function registerGlobalVariableGetter(extensionContext: ExtensionContext): void {
   extensionContext.registerTopicAliases((args) => {
     const { globalVariables } = args;
-    radarcube_sequence = String(globalVariables["radar_seq"]);
-    radarcube_rx = Number(globalVariables["radar_rx"]?.toString());
+    radarcube_sequence = String(globalVariables["radar_seq"] ?? "");
+    const rx = Number(globalVariables["radar_rx"] ?? 0);
+    if (isFinite(rx)) {
+      radarcube_rx = rx;
+    }
     return [];
   });
 }
