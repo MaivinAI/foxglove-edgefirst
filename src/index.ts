@@ -2,10 +2,15 @@ import {
   ImageAnnotations,
   PointsAnnotation,
   Point2,
-  TextAnnotation,
   PointsAnnotationType,
   RawImage,
   Color,
+  SceneEntity,
+  SceneUpdate,
+  TextAnnotation,
+  LinePrimitive,
+  LineType,
+  TextPrimitive,
 } from "@foxglove/schemas";
 import { Time } from "@foxglove/schemas/schemas/typescript/Time";
 import { ExtensionContext } from "@foxglove/studio";
@@ -144,14 +149,19 @@ function uuid_to_color(id: string): Color {
   };
 }
 
+const RADAR_SEQ_VAR = "radar_seq";
+const RADAR_RX_VAR = "radar_rx";
+const BOX_LABEL_VAR = "box_label";
+
 let radarcube_sequence = "";
 let radarcube_rx = 0;
-
+let box_label = "";
 function registerGlobalVariableGetter(extensionContext: ExtensionContext): void {
   extensionContext.registerTopicAliases((args) => {
     const { globalVariables } = args;
-    radarcube_sequence = String(globalVariables["radar_seq"] ?? "");
-    const rx = Number(globalVariables["radar_rx"] ?? 0);
+    box_label = String(globalVariables[BOX_LABEL_VAR] ?? "");
+    radarcube_sequence = String(globalVariables[RADAR_SEQ_VAR] ?? "");
+    const rx = Number(globalVariables[RADAR_RX_VAR] ?? 0);
     if (isFinite(rx)) {
       radarcube_rx = rx;
     } else {
@@ -159,6 +169,54 @@ function registerGlobalVariableGetter(extensionContext: ExtensionContext): void 
     }
     return [];
   });
+}
+
+const cyrb53 = (str: string, seed = 0) => {
+  let h1 = 0xdeadbeef ^ seed,
+    h2 = 0x41c6ce57 ^ seed;
+  for (let i = 0, ch; i < str.length; i++) {
+    ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 ^= Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 ^= Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+
+  return 4294967296 * (2097151 & h2) + (h1 >>> 0);
+};
+function str_to_color(str: string): Color {
+  const hash = cyrb53(str);
+
+  return {
+    r: (hash & 0xff) / 0xff,
+    g: (hash & 0xff00) / 0xff00,
+    b: (hash & 0xff0000) / 0xff00000,
+    a: 1,
+  };
+}
+
+function box_to_color_label(box: DetectBox2D): [Color, string] {
+  let box_color = str_to_color(box.label);
+  let label = box.label;
+  switch (box_label.toLowerCase()) {
+    case "label":
+      break;
+    case "score":
+      label = box.score.toFixed(2);
+      break;
+    case "label-score":
+      label = `${box.label} ${box.score.toFixed(2)}`;
+      break;
+    default: // case "track":
+      if (box.track.id.length > 0) {
+        label = box.track.id.substring(0, 8);
+        box_color = uuid_to_color(box.track.id);
+      }
+      break;
+  }
+  return [box_color, label];
 }
 
 function registerDetectConverter(extensionContext: ExtensionContext): void {
@@ -174,12 +232,7 @@ function registerDetectConverter(extensionContext: ExtensionContext): void {
         const y = box.center_y * 1080;
         const width = box.width * 1920;
         const height = box.height * 1080;
-        let box_color = WHITE;
-        let label = box.label;
-        if (box.track.id.length > 0) {
-          box_color = uuid_to_color(box.track.id);
-          label = box.track.id.substring(0, 8);
-        }
+        const [box_color, label] = box_to_color_label(box);
         const new_point: PointsAnnotation = {
           timestamp: inputMessage.inputTimestamp,
           type: PointsAnnotationType.LINE_LOOP,
@@ -212,6 +265,105 @@ function registerDetectConverter(extensionContext: ExtensionContext): void {
         texts,
       };
       return new_annot;
+    },
+  });
+  extensionContext.registerMessageConverter({
+    fromSchemaName: "edgefirst_msgs/msg/Detect",
+    toSchemaName: "foxglove.SceneUpdate",
+    converter: (inputMessage: DetectBoxes2D): SceneUpdate => {
+      const texts: TextPrimitive[] = [];
+      const lines: LinePrimitive[] = [];
+      inputMessage.boxes.forEach((b: DetectBox2D) => {
+        if (b.distance === 0) {
+          return;
+        }
+        const x = b.distance;
+        const y = b.center_x;
+        const z = b.center_y;
+
+        const width = b.width;
+        const height = b.height;
+        const [box_color, label] = box_to_color_label(b);
+        const line: LinePrimitive = {
+          type: LineType.LINE_LIST,
+          pose: {
+            position: {
+              x,
+              y,
+              z,
+            },
+            orientation: {
+              x: 0,
+              y: 0,
+              z: 0,
+              w: 1,
+            },
+          },
+          thickness: 2,
+          scale_invariant: true,
+          points: [
+            { x: -width / 2, y: -width / 2, z: -height / 2 },
+            { x: -width / 2, y: +width / 2, z: -height / 2 },
+            { x: -width / 2, y: +width / 2, z: +height / 2 },
+            { x: -width / 2, y: -width / 2, z: +height / 2 },
+            { x: +width / 2, y: -width / 2, z: -height / 2 },
+            { x: +width / 2, y: +width / 2, z: -height / 2 },
+            { x: +width / 2, y: +width / 2, z: +height / 2 },
+            { x: +width / 2, y: -width / 2, z: +height / 2 },
+          ],
+          color: box_color,
+          colors: [],
+          indices: [0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7],
+        };
+        lines.push(line);
+
+        const t: TextPrimitive = {
+          pose: {
+            position: {
+              x,
+              y,
+              z: z + height / 2 + 0.2,
+            },
+            orientation: {
+              x: 0,
+              y: 0,
+              z: 0,
+              w: 1,
+            },
+          },
+          billboard: true,
+          font_size: 12,
+          scale_invariant: true,
+          color: box_color,
+          text: label,
+        };
+        texts.push(t);
+      });
+
+      const new_annot: SceneEntity = {
+        timestamp: inputMessage.inputTimestamp,
+        frame_id: inputMessage.header.frame_id,
+        id: inputMessage.header.frame_id,
+        lifetime: {
+          sec: 0,
+          nsec: 0,
+        },
+        frame_locked: false,
+        metadata: [],
+        arrows: [],
+        cubes: [],
+        spheres: [],
+        cylinders: [],
+        lines,
+        triangles: [],
+        texts,
+        models: [],
+      };
+      const update: SceneUpdate = {
+        deletions: [],
+        entities: [new_annot],
+      };
+      return update;
     },
   });
 }
